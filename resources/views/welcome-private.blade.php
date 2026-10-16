@@ -52,31 +52,9 @@
 			target="_blank" rel="noopener noreferrer"
 			class="btn-3d w-full py-4 px-6 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-base flex items-center justify-center gap-3 shadow-lg transition-transform transform active:scale-95"
 			style="--btn-shadow: #059669; box-shadow: 0 4px 0 #059669;">
-			<span class="text-2xl">💬</span>
+			<span class="text-2xl">📲</span>
 			<span>Pedir cuenta por WhatsApp</span>
 		</a>
-		<p class="text-[11px] font-bold text-slate-400 mt-2">
-			Contacto directo: <strong>+51 971893196</strong>
-		</p>
-
-		<div class="w-full my-6 flex items-center gap-3">
-			<div class="flex-1 h-px bg-slate-200"></div>
-			<span class="text-xs font-extrabold text-slate-400 uppercase tracking-wider">¿Ya tienes un enlace?</span>
-			<div class="flex-1 h-px bg-slate-200"></div>
-		</div>
-
-		<!-- Formulario directo por alias -->
-		<form onsubmit="event.preventDefault(); const val = document.getElementById('input-alias').value.trim(); if(val) window.location.href = '/' + encodeURIComponent(val);" class="w-full flex gap-2">
-			<input id="input-alias" type="text" placeholder="Ej: amelie-taboada"
-				class="flex-1 px-4 py-2.5 rounded-xl border-2 border-slate-200 focus:border-indigo-400 focus:outline-none text-sm font-bold text-slate-700 placeholder:text-slate-300" />
-			<button type="submit"
-				class="btn-3d px-4 py-2.5 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white font-extrabold text-sm flex items-center gap-1"
-				style="--btn-shadow: #4f46e5; box-shadow: 0 3px 0 #4f46e5;">
-				<span>Entrar</span>
-				<span>🚀</span>
-			</button>
-		</form>
-
 	</div>
 
 </body>

@@ -16,25 +16,28 @@ class StudentSeeder extends Seeder
             [
                 'name' => 'Amelie Taboada',
                 'slug' => 'amelie-taboada',
+                'access_token' => '7a2k',
                 'avatar' => '👧',
                 'parent_name' => 'Familia Taboada',
             ],
             [
                 'name' => 'Arya Urbano',
                 'slug' => 'arya-urbano',
+                'access_token' => '4m9x',
                 'avatar' => '👧',
                 'parent_name' => 'Familia Urbano',
             ],
             [
                 'name' => 'Alana Vílchez',
                 'slug' => 'alana-vilchez',
+                'access_token' => '8v3p',
                 'avatar' => '👧',
                 'parent_name' => 'Familia Vílchez',
             ],
         ];
 
         foreach ($students as $data) {
-            $student = Student::firstOrCreate(
+            $student = Student::updateOrCreate(
                 ['slug' => $data['slug']],
                 $data
             );

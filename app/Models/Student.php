@@ -7,11 +7,13 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
 
 /**
  * @property int $id
  * @property string $name
  * @property string $slug
+ * @property string $access_token
  * @property string $avatar
  * @property string|null $parent_name
  * @property string|null $parent_phone
@@ -20,7 +22,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $updated_at
  * @property-read Collection<int, StudentLevelProgress> $levelProgress
  */
-#[Fillable(['name', 'slug', 'avatar', 'parent_name', 'parent_phone', 'is_active'])]
+#[Fillable(['name', 'slug', 'access_token', 'avatar', 'parent_name', 'parent_phone', 'is_active'])]
 class Student extends Model
 {
     /**
@@ -28,6 +30,15 @@ class Student extends Model
      * Puedes cambiar este valor (por ejemplo a 300) y se actualizará en todo el juego.
      */
     public const TARGET_STARS_PER_LEVEL = 100;
+
+    protected static function booted(): void
+    {
+        static::creating(function (Student $student): void {
+            if (empty($student->access_token)) {
+                $student->access_token = Str::lower(Str::random(4));
+            }
+        });
+    }
 
     /**
      * @return array<string, string>

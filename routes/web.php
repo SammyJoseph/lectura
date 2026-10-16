@@ -12,6 +12,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 require __DIR__.'/settings.php';
 
-Route::get('/{slug}', [StudentAccessController::class, 'accessBySlug'])
+Route::get('/{slug}/{token}', [StudentAccessController::class, 'accessByLink'])
     ->where('slug', '^(?!admin|dashboard|settings|login|register|logout|salir|up|_boost)[a-z0-9\-]+$')
     ->name('student.access');
+
+Route::get('/{slug}', [StudentAccessController::class, 'accessMissingToken'])
+    ->where('slug', '^(?!admin|dashboard|settings|login|register|logout|salir|up|_boost)[a-z0-9\-]+$');

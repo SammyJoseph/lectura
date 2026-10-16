@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('slug')->unique();
+            $table->string('access_token', 64)->unique();
             $table->string('avatar')->default('🧒');
             $table->string('parent_name')->nullable();
             $table->string('parent_phone')->nullable();

@@ -15,13 +15,16 @@ test('unauthenticated visitor to root sees private welcome page with WhatsApp li
     $response->assertSee('51971893196');
     $response->assertSee('Aprende a Leer y Escribir');
     $response->assertSee('Pedir cuenta por WhatsApp');
+    $response->assertDontSee('Contacto directo');
+    $response->assertDontSee('¿Ya tienes un enlace?');
 });
 
-test('visitor accessing valid student slug logs in and redirects to home', function () {
+test('visitor accessing student slug without token redirects with error', function () {
     $student = Student::firstOrCreate(
         ['slug' => 'test-estudiante'],
         [
             'name' => 'Estudiante de Prueba',
+            'access_token' => 'token-prueba-123',
             'avatar' => '🧒',
         ]
     );
@@ -29,8 +32,43 @@ test('visitor accessing valid student slug logs in and redirects to home', funct
     $response = $this->get('/test-estudiante');
 
     $response->assertRedirect('/');
+    $response->assertSessionHas('error');
+    $this->assertNull(session('student_id'));
+});
+
+test('visitor accessing valid student slug and token logs in and redirects to home', function () {
+    $student = Student::firstOrCreate(
+        ['slug' => 'test-estudiante-token'],
+        [
+            'name' => 'Estudiante Token',
+            'access_token' => 'seguro456',
+            'avatar' => '🧒',
+        ]
+    );
+
+    $response = $this->get('/test-estudiante-token/seguro456');
+
+    $response->assertRedirect('/');
     $this->assertEquals($student->id, session('student_id'));
-    $response->assertCookie('student_slug', 'test-estudiante');
+    $response->assertCookie('student_slug', 'test-estudiante-token');
+    $response->assertCookie('student_token', 'seguro456');
+});
+
+test('visitor accessing valid student slug with wrong token redirects with error', function () {
+    $student = Student::firstOrCreate(
+        ['slug' => 'test-estudiante-wrong'],
+        [
+            'name' => 'Estudiante Wrong Token',
+            'access_token' => 'clave-correcta',
+            'avatar' => '🧒',
+        ]
+    );
+
+    $response = $this->get('/test-estudiante-wrong/clave-incorrecta');
+
+    $response->assertRedirect('/');
+    $response->assertSessionHas('error');
+    $this->assertNull(session('student_id'));
 });
 
 test('invalid student slug redirects to home with error', function () {
@@ -115,6 +153,7 @@ test('livewire game screen component can record stars and select levels', functi
 test('student logout clears session and cookie', function () {
     $response = $this->withSession(['student_id' => 1])
         ->withCookie('student_slug', 'amelie-taboada')
+        ->withCookie('student_token', 'amelie2026')
         ->get('/salir');
 
     $response->assertRedirect('/');

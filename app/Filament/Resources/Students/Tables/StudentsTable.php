@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Students\Tables;
 
+use App\Models\Student;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -25,13 +26,14 @@ class StudentsTable
                     ->sortable()
                     ->weight('bold'),
 
-                TextColumn::make('slug')
-                    ->label('Slug de Acceso')
+                TextColumn::make('access_link')
+                    ->label('Enlace de Acceso')
+                    ->state(fn (Student $record): string => '/'.$record->slug.'/'.$record->access_token)
                     ->copyable()
+                    ->copyableState(fn (Student $record): string => url('/'.$record->slug.'/'.$record->access_token))
                     ->copyMessage('¡Enlace de acceso copiado!')
                     ->badge()
-                    ->color('info')
-                    ->formatStateUsing(fn (string $state): string => '/'.$state),
+                    ->color('info'),
 
                 TextColumn::make('stars')
                     ->label('Estrellas ⭐')

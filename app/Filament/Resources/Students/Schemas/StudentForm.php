@@ -26,8 +26,16 @@ class StudentForm
                     }),
 
                 TextInput::make('slug')
-                    ->label('Enlace de Acceso Personalizado (Slug)')
-                    ->helperText('Permite ingresar directamente mediante http://tudominio.test/slug-del-nino')
+                    ->label('Slug de Acceso')
+                    ->helperText('Identificador en la URL (ej: amelie-taboada)')
+                    ->required()
+                    ->unique(ignoreRecord: true),
+
+                TextInput::make('access_token')
+                    ->label('Token Secreto de Acceso')
+                    ->helperText('Código corto de 4 caracteres (ej: 7a2k) que previene accesos no deseados.')
+                    ->default(fn () => Str::lower(Str::random(4)))
+                    ->maxLength(20)
                     ->required()
                     ->unique(ignoreRecord: true),
 

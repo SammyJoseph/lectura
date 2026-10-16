@@ -21,9 +21,15 @@ class StudentAccessController extends Controller
             $student = Student::with('levelProgress')->where('id', $studentId)->where('is_active', true)->first();
         }
 
-        if (! $student && $request->hasCookie('student_slug')) {
+        if (! $student && $request->hasCookie('student_slug') && $request->hasCookie('student_token')) {
             $cookieSlug = (string) $request->cookie('student_slug');
-            $student = Student::with('levelProgress')->where('slug', $cookieSlug)->where('is_active', true)->first();
+            $cookieToken = (string) $request->cookie('student_token');
+            $student = Student::with('levelProgress')
+                ->where('slug', $cookieSlug)
+                ->where('access_token', $cookieToken)
+                ->where('is_active', true)
+                ->first();
+
             if ($student) {
                 session(['student_id' => $student->id]);
             }
@@ -41,21 +47,33 @@ class StudentAccessController extends Controller
     }
 
     /**
-     * Authenticate a student via personalized URL slug (e.g. /amelie-taboada).
+     * Authenticate a student via personalized URL with slug and security token.
      */
-    public function accessBySlug(string $slug): RedirectResponse
+    public function accessByLink(string $slug, string $token): RedirectResponse
     {
-        $student = Student::where('slug', $slug)->where('is_active', true)->first();
+        $student = Student::where('slug', $slug)
+            ->where('access_token', $token)
+            ->where('is_active', true)
+            ->first();
 
         if (! $student) {
-            return redirect()->route('home')->with('error', 'El enlace de estudiante no existe o está inactivo. Escríbenos por WhatsApp para ayudarte.');
+            return redirect()->route('home')->with('error', 'El enlace de estudiante no es válido o ha expirado. Escríbenos por WhatsApp para ayudarte.');
         }
 
         $student->initializeLevels();
         session(['student_id' => $student->id]);
         cookie()->queue(cookie('student_slug', $student->slug, 60 * 24 * 30));
+        cookie()->queue(cookie('student_token', $student->access_token, 60 * 24 * 30));
 
         return redirect()->route('home');
+    }
+
+    /**
+     * Handle attempts to access using slug only without security token.
+     */
+    public function accessMissingToken(): RedirectResponse
+    {
+        return redirect()->route('home')->with('error', 'Por seguridad, el enlace debe incluir tu código de acceso privado. Escríbenos para enviártelo.');
     }
 
     /**
@@ -65,6 +83,7 @@ class StudentAccessController extends Controller
     {
         session()->forget('student_id');
         cookie()->queue(cookie()->forget('student_slug'));
+        cookie()->queue(cookie()->forget('student_token'));
 
         return redirect()->route('home');
     }
