@@ -104,11 +104,11 @@ function updateWordsPool(words) {
    como siglas ("SA", "SO"), elementos químicos ("NA" -> Sodio) o deletree
    letras individuales con tilde ("RRO" -> "ERRE ERRE O CON ACENTO AGUDO") */
 const SYLLABLE_PHONETIC_MAP = {
-	// Vocales aisladas
-	"a": "á", "e": "é", "i": "í", "o": "o", "u": "ú",
+	// Vocales aisladas (sin tilde para evitar que el TTS diga "A con acento")
+	"a": "a", "e": "e", "i": "i", "o": "o", "u": "u",
 
 	// Sílabas con M
-	"ma": "ma", "me": "me", "mi": "mi", "mo": "mó", "mu": "mu", "má": "má",
+	"ma": "ma", "me": "me", "mi": "mi", "mo": "mo", "mu": "mu", "má": "má",
 
 	// Sílabas con P
 	"pa": "pa", "pe": "pe", "pi": "pi", "po": "po", "pu": "pu", "pá": "pá",
@@ -119,8 +119,8 @@ const SYLLABLE_PHONETIC_MAP = {
 	// Sílabas con L (lo -> lo evita deletreo de 'LÓ')
 	"la": "la", "le": "le", "li": "li", "lo": "lo", "lu": "lu",
 
-	// Sílabas con N (na -> ná evita símbolo químico Na 'sodio' en voces como Sabina, no -> no)
-	"na": "ná", "ne": "ne", "ni": "ni", "no": "no", "nu": "nu",
+	// Sílabas con N (na -> na sin tilde; 'ná' inducía sonido palatalizado 'ÑA' en el TTS)
+	"na": "na", "ne": "ne", "ni": "ni", "no": "no", "nu": "nu",
 
 	// Sílabas con T (to -> to evita deletreo de 'TÓ')
 	"ta": "ta", "te": "te", "ti": "ti", "to": "to", "tu": "tu",
@@ -128,24 +128,19 @@ const SYLLABLE_PHONETIC_MAP = {
 	// Sílabas con D (do -> do evita deletreo de 'DÓ')
 	"da": "da", "de": "de", "di": "di", "do": "do", "du": "du",
 
-	// Sílabas con C (cu -> ku evita lectura en inglés 'see you')
-	"ca": "ca", "co": "kó", "cu": "ku",
+	// Sílabas con C (fuerte -> k para evitar que el TTS las lea como siglas: CA->California, CO->Colombia/Company, CU->see you)
+	"ca": "ka", "co": "ko", "cu": "ku", "cán": "kán", "car": "kar", "cam": "kam", "cua": "kua",
 
 	// Sílabas con V y B (ve/be -> ve evita lectura de 'bé' como letra 'b con acento')
 	"va": "va", "ve": "ve", "vi": "vi", "vo": "bo", "vu": "bu",
 	"ba": "ba", "be": "ve", "bi": "bi", "bo": "bo", "bu": "bu",
 
 	// Sílabas con G (go -> go evita deletreo de 'GÓ')
-	"ga": "ga", "go": "go", "gu": "gu",
+	"ga": "ga", "ge": "je", "gi": "ji", "go": "go", "gu": "gu", "gue": "ge", "gui": "gi",
 
 	// Sílabas con R (fuerte / inicial):
-	// 'rro' y 'ro' se pronuncian 'rro' para que Sabina no lea 'row' en inglés y Google no deletree 'ERRE ERRE O CON ACENTO AGUDO'
-	// 'ri' y 'rri' usan 'rí' para evitar 'R-I' en inglés
-	// 'ru' y 'rru' usan 'rú' para evitar 'R-U' en inglés
-	// 'ra' y 'rra' usan 'ra' para que Google no deletree 'erre erre a'
-	// 're' y 'rre' usan 're' para que Google no deletree 'erre e con acento agudo'
-	"ra": "ra", "re": "re", "ri": "rí", "ro": "rro", "ru": "rú",
-	"rra": "ra", "rre": "re", "rri": "rí", "rro": "rro", "rru": "rú",
+	"ra": "ra", "re": "re", "ri": "ri", "ro": "ro", "ru": "ru",
+	"rra": "ra", "rre": "re", "rri": "ri", "rro": "ro", "rru": "ru",
 
 	// Sílabas con Ñ (ño -> ño evita deletreo de 'ñó')
 	"ña": "ña", "ñe": "ñe", "ñi": "ñi", "ño": "ño", "ñu": "ñu",
@@ -153,29 +148,47 @@ const SYLLABLE_PHONETIC_MAP = {
 	// Sílabas con F (fo -> fo evita deletreo de 'fó')
 	"fa": "fa", "fe": "fe", "fi": "fi", "fo": "fo", "fu": "fu",
 
-	// Sílabas con J
-	"ja": "ja", "je": "je", "ji": "ji", "jo": "jo", "ju": "ju",
+	// Sílabas con J (ja -> já evita deletreo 'JOTA A' como sigla en Chrome/Windows TTS)
+	"ja": "já", "je": "je", "ji": "ji", "jo": "jo", "ju": "ju",
+
+	// Sílabas con K
+	"ka": "ka", "ke": "ke", "ki": "ki", "ko": "ko", "ku": "ku",
+
+	// Sílabas con Q
+	"que": "ke", "qui": "ki",
+
+	// Sílabas con H
+	"ha": "a", "he": "e", "hi": "i", "ho": "o", "hu": "u", "hue": "ue",
+
+	// Sílabas con W (we -> güe evita que el TTS lo confunda con el pronombre en inglés 'we' /wi/)
+	"wa": "gua", "we": "güe", "wi": "güi", "wo": "guo", "wu": "gu",
+
+	// Sílabas con X
+	"xa": "xa", "xe": "xe", "xi": "xi", "xo": "xo", "xu": "xu",
 
 	// Sílabas con Z y C suave
-	"za": "za", "zo": "zo", "zu": "zu", "ce": "ce", "ci": "sí",
+	"za": "za", "ze": "ce", "zi": "sí", "zo": "zo", "zu": "zu", "ce": "ce", "ci": "sí",
 
 	// Sílabas con CH
 	"cha": "cha", "che": "che", "chi": "chi", "cho": "cho", "chu": "chu",
 
-	// Sílabas con LL y Y
-	"lla": "lla", "lle": "lle", "lli": "lli", "llo": "llo",
+	// Sílabas con LL y Y (conservar ll natural sin forzar a 'y' para no inducir sheísmo)
+	"lla": "lla", "lle": "lle", "lli": "lli", "llo": "llo", "llu": "llu",
 	"ya": "ya", "ye": "ye", "yi": "yi", "yo": "yo", "yu": "yu",
 
-	// Sílabas acentuadas o con coda simple
-	"bé": "bé", "dor": "dor"
+	// Sílabas acentuadas o con coda de Nivel 2 (evita lectura de 'A con acento' o 'I con acento')
+	"bé": "be", "bú": "bu", "dí": "di", "fá": "fa", "fín": "fin", "lá": "la",
+	"má": "ma", "món": "món", "ní": "ni", "pá": "pa", "ré": "re", "rí": "ri",
+	"rón": "rón", "tín": "tin", "tón": "tón", "ár": "ar", "íz": "is", "zza": "sa",
+	"rroz": "ros", "vión": "bión", "mión": "mión", "dor": "dor"
 };
 
 const LETTER_PHONETIC_MAP = {
-	"a": "á", "á": "á", "b": "be", "c": "ce", "d": "de", "e": "é", "é": "é",
-	"f": "efe", "g": "ge", "h": "hache", "i": "í", "í": "í", "j": "jota",
+	"a": "a", "á": "a", "b": "be", "c": "ce", "d": "de", "e": "e", "é": "e",
+	"f": "efe", "g": "ge", "h": "hache", "i": "i", "í": "i", "j": "jota",
 	"k": "ka", "l": "ele", "m": "eme", "n": "ene", "ñ": "eñe",
-	"o": "ó", "ó": "ó", "p": "pe", "q": "cu", "r": "erre", "s": "ese",
-	"t": "te", "u": "ú", "ú": "ú", "v": "uve", "w": "doble uve",
+	"o": "o", "ó": "o", "p": "pe", "q": "cu", "r": "erre", "s": "ese",
+	"t": "te", "u": "u", "ú": "u", "v": "uve", "w": "doble uve",
 	"x": "equis", "y": "ye", "z": "zeta"
 };
 
@@ -187,6 +200,7 @@ const DISTRACTOR_LETTERS = ["m", "p", "s", "l", "t", "a", "e", "o", "u", "n", "c
    ========================================================================== */
 const state = {
 	stars: 0,
+	targetStars: 100,
 	currentLevel: 1,
 	isUppercase: true,        // MAYÚSCULAS por defecto
 	unitMode: "syllables",    // "syllables" por defecto ("letters" opcional)
@@ -262,18 +276,40 @@ const SoundFX = {
 let selectedSpanishVoice = null;
 
 function loadSpanishVoice() {
-	if (!("speechSynthesis" in window)) return;
+	if (!("speechSynthesis" in window)) return null;
 	const voices = window.speechSynthesis.getVoices();
-	if (!voices || !voices.length) return;
+	if (!voices || !voices.length) return null;
+
+	const allSpanish = voices.filter(v => (v.lang || "").toLowerCase().replace("_", "-").startsWith("es"));
+	if (!allSpanish.length) return null;
+
+	// Filtrar dialectos con yeísmo rehilado / sheísmo (Argentina, Uruguay) que pronuncian 'll' y 'y' como 'sh' ("sho", "anisho")
+	const isNotRioplatense = (v) => {
+		const lang = (v.lang || "").toLowerCase().replace("_", "-");
+		const name = (v.name || "").toLowerCase();
+		return !lang.includes("-ar") && !lang.includes("-uy") && !name.includes("argentina") && !name.includes("elena") && !name.includes("tomas");
+	};
+
+	const neutralVoices = allSpanish.filter(isNotRioplatense);
+	const pool = neutralVoices.length > 0 ? neutralVoices : allSpanish;
+
+	// Prioridad de voces naturales y neutrales (México, Perú, Colombia, EE.UU., España):
 	selectedSpanishVoice =
-		voices.find(v => v.lang.toLowerCase().startsWith("es") && (v.name.includes("Sabina") || v.name.includes("Paulina") || v.name.includes("Monica") || v.name.includes("Google") || v.name.includes("Natural"))) ||
-		voices.find(v => v.lang.toLowerCase().startsWith("es")) ||
+		pool.find(v => (v.name.includes("Natural") || v.name.includes("Google") || v.name.includes("Online")) && (v.lang.includes("MX") || v.lang.includes("PE") || v.lang.includes("CO") || v.lang.includes("US") || v.lang.includes("ES"))) ||
+		pool.find(v => v.name.includes("Dalia") || v.name.includes("Jorge") || v.name.includes("Sabina") || v.name.includes("Paulina") || v.name.includes("Helena") || v.name.includes("Alvaro") || v.name.includes("Elvira")) ||
+		pool.find(v => v.lang.includes("MX") || v.lang.includes("PE") || v.lang.includes("CO") || v.lang.includes("US")) ||
+		pool.find(v => v.lang.includes("ES")) ||
+		pool[0] ||
 		null;
+
+	return selectedSpanishVoice;
 }
 
 if ("speechSynthesis" in window) {
 	loadSpanishVoice();
-	window.speechSynthesis.onvoiceschanged = loadSpanishVoice;
+	window.speechSynthesis.onvoiceschanged = () => {
+		loadSpanishVoice();
+	};
 }
 
 function clearSlowTimers() {
@@ -286,9 +322,9 @@ function toSafeSyllablePhonetic(syllable) {
 	if (SYLLABLE_PHONETIC_MAP[clean]) {
 		return SYLLABLE_PHONETIC_MAP[clean];
 	}
-	// Protección especial para dígrafos que no existen al inicio de palabra en español
+	// Protección para dígrafos que no existen al inicio de palabra en español
 	if (clean.startsWith("rr")) {
-		return clean === "rro" ? "rro" : clean.replace(/^rr/, "r");
+		return clean.replace(/^rr/, "r");
 	}
 	return clean;
 }
@@ -298,26 +334,153 @@ function toSafeLetterPhonetic(letter) {
 	return LETTER_PHONETIC_MAP[clean] || clean;
 }
 
+function updateLevelBadge() {
+	const levelBadge = document.getElementById("level-name-badge");
+	if (!levelBadge) return;
+	levelBadge.textContent = `Nivel ${state.currentLevel}`;
+	if (state.currentLevel === 1) {
+		levelBadge.className = "text-xs font-black text-indigo-700 bg-indigo-50 border border-indigo-200 px-2.5 py-0.5 rounded-full";
+	} else if (state.currentLevel === 2) {
+		levelBadge.className = "text-xs font-black text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full";
+	} else if (state.currentLevel === 3) {
+		levelBadge.className = "text-xs font-black text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded-full";
+	} else {
+		levelBadge.className = "text-xs font-black text-rose-700 bg-rose-50 border border-rose-200 px-2.5 py-0.5 rounded-full";
+	}
+}
+
 function speakText(text, rate = 0.9) {
 	if (!("speechSynthesis" in window)) return;
 	try {
+		if (window.speechSynthesis.paused) {
+			window.speechSynthesis.resume();
+		}
 		window.speechSynthesis.cancel();
-		const safeLowerText = String(text || "").toLowerCase().trim();
+		let safeLowerText = String(text || "").toLowerCase().trim();
 		if (!safeLowerText) return;
 
+		// Si el texto a hablar es una sílaba aislada en el mapa fonético seguro, aplicarlo automáticamente
+		const cleanCandidate = safeLowerText.replace(/[¡!¿?.,;:]/g, "").trim();
+		if (SYLLABLE_PHONETIC_MAP[cleanCandidate]) {
+			safeLowerText = safeLowerText.replace(cleanCandidate, SYLLABLE_PHONETIC_MAP[cleanCandidate]);
+		}
+
+		// Si aún no se ha obtenido la voz o el navegador la cargó de forma diferida, buscarla
+		if (!selectedSpanishVoice) {
+			loadSpanishVoice();
+		}
+
 		const utter = new SpeechSynthesisUtterance(safeLowerText);
-		if (selectedSpanishVoice) utter.voice = selectedSpanishVoice;
-		utter.lang = selectedSpanishVoice ? selectedSpanishVoice.lang : "es-ES";
+		if (selectedSpanishVoice) {
+			utter.voice = selectedSpanishVoice;
+			utter.lang = selectedSpanishVoice.lang;
+		} else {
+			utter.lang = "es-MX";
+		}
 		utter.rate = rate;
-		utter.pitch = 1.08;
+		utter.pitch = 1.05;
 		window.speechSynthesis.speak(utter);
 	} catch (e) { }
 }
+
+/* ==========================================================================
+   4.1 REPRODUCTOR HÍBRIDO DE SÍLABAS (AUDIO LOCAL FIRST + FALLBACK TTS)
+   ========================================================================== */
+const SyllableAudioPlayer = {
+	manifest: new Set(),
+	audioCache: new Map(),
+	currentAudio: null,
+	isLoaded: false,
+
+	async init() {
+		try {
+			const res = await fetch("/audio/syllables/manifest.json?v=" + Date.now());
+			if (res.ok) {
+				const list = await res.json();
+				if (Array.isArray(list)) {
+					this.manifest = new Set(list.map(s => String(s).toLowerCase().trim()));
+					this.isLoaded = true;
+				}
+			}
+		} catch (e) {
+			console.warn("Manifiesto de audios de sílabas no disponible, usando fallback TTS:", e);
+		}
+	},
+
+	slugify(syllable) {
+		return String(syllable || "")
+			.toLowerCase()
+			.replace(/[áàä]/g, "a")
+			.replace(/[éèë]/g, "e")
+			.replace(/[íìï]/g, "i")
+			.replace(/[óòö]/g, "o")
+			.replace(/[úùü]/g, "u")
+			.replace(/[^a-z0-9ñ]/g, "")
+			.trim();
+	},
+
+	stop() {
+		if (this.currentAudio) {
+			try {
+				this.currentAudio.pause();
+				this.currentAudio.currentTime = 0;
+			} catch (e) {}
+			this.currentAudio = null;
+		}
+	},
+
+	play(syllable, rate = 0.9, onEnd = null) {
+		this.stop();
+		if ("speechSynthesis" in window) {
+			window.speechSynthesis.cancel();
+		}
+
+		const slug = this.slugify(syllable);
+
+		// 1. Si el archivo local existe en el manifiesto, reproducir MP3 local
+		if (this.manifest.has(slug)) {
+			try {
+				let audio = this.audioCache.get(slug);
+				if (!audio) {
+					audio = new Audio(`/audio/syllables/${slug}.mp3`);
+					this.audioCache.set(slug, audio);
+				}
+				audio.currentTime = 0;
+				audio.playbackRate = 1.0;
+				this.currentAudio = audio;
+
+				if (onEnd) {
+					audio.onended = () => {
+						audio.onended = null;
+						onEnd();
+					};
+				}
+
+				const playPromise = audio.play();
+				if (playPromise !== undefined) {
+					playPromise.catch(() => {
+						// Fallback a TTS si el navegador bloquea autoplay o falla la carga
+						speakText(toSafeSyllablePhonetic(syllable), rate);
+						if (onEnd) setTimeout(onEnd, 600);
+					});
+				}
+				return;
+			} catch (err) {
+				console.warn("Fallo reproducción MP3 de sílaba, aplicando fallback TTS:", err);
+			}
+		}
+
+		// 2. Fallback transparente a TTS si no existe el archivo MP3
+		speakText(toSafeSyllablePhonetic(syllable), rate);
+		if (onEnd) setTimeout(onEnd, 650);
+	}
+};
 
 // Reproduce las sílabas lentamente una por una SIN repetir la palabra completa al final
 function speakSlowSyllables() {
 	if (!state.currentWordObj) return;
 	clearSlowTimers();
+	SyllableAudioPlayer.stop();
 	if ("speechSynthesis" in window) window.speechSynthesis.cancel();
 
 	const spokenSyllables = state.currentWordObj.syllables.filter(s => s.trim() !== "");
@@ -325,8 +488,7 @@ function speakSlowSyllables() {
 
 	spokenSyllables.forEach((syl, idx) => {
 		const timerId = setTimeout(() => {
-			const phoneticSyl = toSafeSyllablePhonetic(syl);
-			speakText(phoneticSyl, 0.82);
+			SyllableAudioPlayer.play(syl, 0.82);
 		}, idx * stepDelay);
 		state.slowTimers.push(timerId);
 	});
@@ -451,11 +613,9 @@ function nextExercise() {
 	state.isTransitioning = false;
 	stopConfettiImmediately();
 	clearSlowTimers();
+	SyllableAudioPlayer.stop();
 	stopMicrophone();
 	hideFeedback();
-
-	const overlay = document.getElementById("success-overlay");
-	if (overlay) overlay.classList.add("hidden");
 
 	state.currentWordObj = pickRandomWord();
 
@@ -468,23 +628,145 @@ function nextExercise() {
 	renderCurrentExercise();
 }
 
+function getConsonantPrefix(rawWord) {
+	const w = String(rawWord || "").toUpperCase();
+	if (w.startsWith("CH")) return "CH";
+	if (w.startsWith("LL")) return "LL";
+	if (w.startsWith("QU")) return "QU";
+	if (w.startsWith("GU") && (w === "GUE" || w === "GUI")) return "GU";
+	return w.charAt(0);
+}
+
+function renderSyllablesDiscrimination() {
+	const grid = document.getElementById("syllables-grid");
+	if (!grid || !state.currentWordObj) return;
+
+	grid.innerHTML = "";
+
+	const targetWord = state.currentWordObj.word.toUpperCase();
+	const prefix = getConsonantPrefix(targetWord);
+
+	// 1. Distractores de la misma familia consonántica
+	const sameFamily = activeWordsPool
+		.filter(w => {
+			const itemWord = String(w.word || "").toUpperCase();
+			return itemWord !== targetWord && getConsonantPrefix(itemWord) === prefix;
+		})
+		.map(w => String(w.word || "").toUpperCase());
+
+	const shuffledFamily = shuffleArray(sameFamily);
+	const pickedDistractors = shuffledFamily.slice(0, 3);
+
+	// 2. Si la familia tiene menos de 3 (ej. QUE y QUI), rellenar con otras sílabas
+	if (pickedDistractors.length < 3) {
+		const otherPool = activeWordsPool
+			.filter(w => {
+				const itemWord = String(w.word || "").toUpperCase();
+				return itemWord !== targetWord && !pickedDistractors.includes(itemWord);
+			})
+			.map(w => String(w.word || "").toUpperCase());
+		const shuffledOther = shuffleArray(otherPool);
+		while (pickedDistractors.length < 3 && shuffledOther.length > 0) {
+			pickedDistractors.push(shuffledOther.pop());
+		}
+	}
+
+	// 3. Crear el mazo de 4 opciones y barajarlo
+	const options = shuffleArray([targetWord, ...pickedDistractors]);
+
+	// 4. Renderizar las tarjetas de texto puro
+	options.forEach(optWord => {
+		const btn = document.createElement("button");
+		btn.type = "button";
+		btn.className = "syllable-card-btn btn-3d";
+		btn.dataset.syllable = optWord;
+		btn.textContent = formatTextCase(optWord);
+
+		btn.addEventListener("click", () => {
+			if (state.isTransitioning) return;
+
+			if (optWord === targetWord) {
+				btn.classList.add("correct");
+				SoundFX.pop();
+				SyllableAudioPlayer.play(optWord, 0.95);
+				triggerSuccess();
+			} else {
+				btn.classList.add("wrong");
+				SoundFX.nudge();
+				// Re-pronunciar la sílaba buscada para reforzar al niño
+				setTimeout(() => {
+					SyllableAudioPlayer.play(targetWord, 0.88);
+				}, 150);
+			}
+		});
+
+		grid.appendChild(btn);
+	});
+
+	// 5. Reproducir automáticamente la sílaba objetivo en Nivel 1
+	setTimeout(() => {
+		if (state.currentLevel === 1 && state.currentWordObj) {
+			SyllableAudioPlayer.play(targetWord, 0.9);
+		}
+	}, 180);
+}
+
 function renderCurrentExercise() {
 	if (!state.currentWordObj) return;
 
+	updateLevelBadge();
+
 	const badge = document.getElementById("mode-badge");
-	const emojiEl = document.getElementById("word-emoji");
 	const emojiBtn = document.getElementById("emoji-btn");
-	const emojiSpeakerBadge = document.getElementById("emoji-speaker-badge");
 	const audioRow = document.getElementById("audio-controls-row");
 	const sectionA = document.getElementById("section-mode-a");
 	const sectionB = document.getElementById("section-mode-b");
+	const sectionSyllables = document.getElementById("section-syllables");
+	const btnToggleMode = document.getElementById("btn-toggle-mode");
+	const badgeLevel1Mode = document.getElementById("badge-level1-mode");
+	const skipLabel = document.getElementById("skip-label");
+
+	// ==========================================================
+	// CASO A: NIVEL 1 - SILABARIO (DISCRIMINACIÓN DE SÍLABAS)
+	// ==========================================================
+	if (state.currentLevel === 1) {
+		if (btnToggleMode) btnToggleMode.classList.add("hidden");
+		if (badgeLevel1Mode) badgeLevel1Mode.classList.remove("hidden");
+		if (skipLabel) skipLabel.textContent = "OTRA SÍLABA";
+
+		if (badge) {
+			badge.textContent = "👂 ESCUCHO Y TOCO";
+			badge.className = "px-3.5 py-1 rounded-full text-xs font-extrabold tracking-wide bg-indigo-100 text-indigo-700";
+		}
+
+		if (emojiBtn) emojiBtn.classList.add("hidden");
+		if (audioRow) audioRow.classList.add("hidden");
+		if (sectionA) sectionA.classList.add("hidden");
+		if (sectionB) sectionB.classList.add("hidden");
+		if (sectionSyllables) sectionSyllables.classList.remove("hidden");
+
+		renderSyllablesDiscrimination();
+		return;
+	}
+
+	// ==========================================================
+	// CASO B: NIVEL 2 EN ADELANTE - PALABRAS MÁGICAS
+	// ==========================================================
+	if (btnToggleMode) btnToggleMode.classList.remove("hidden");
+	if (badgeLevel1Mode) badgeLevel1Mode.classList.add("hidden");
+	if (skipLabel) skipLabel.textContent = "OTRA PALABRA";
+	if (sectionSyllables) sectionSyllables.classList.add("hidden");
+	if (emojiBtn) emojiBtn.classList.remove("hidden");
+
+	const emojiEl = document.getElementById("word-emoji");
+	const emojiSpeakerBadge = document.getElementById("emoji-speaker-badge");
 
 	if (emojiEl) {
 		emojiEl.classList.remove("emoji-reveal-anim");
 	}
 
 	if (state.currentMode === "speak") {
-		// MODO A: LEO Y HABLO (Ocultar emoji para que el niño no adivine la palabra)
+		// MODO A: LEO Y HABLO
 		if (emojiEl) emojiEl.textContent = "❓";
 		if (emojiBtn) {
 			emojiBtn.classList.add("mystery");
@@ -517,13 +799,17 @@ function renderCurrentExercise() {
 		if (sectionB) sectionB.classList.remove("hidden");
 
 		setupAndRenderModeB();
+	}
 
-		// Reproducir la palabra al entrar en Modo Armar
+	// En Nivel 2: auto-reproducir ÚNICAMENTE en Modo B ("Escucho y Armo").
+	// En Modo A ("Leo y Hablo"), NUNCA debe auto-pronunciar la palabra al cargar
+	// porque el objetivo pedagógico es que el niño lea la palabra por sí mismo antes de hablar al micrófono.
+	if (state.currentLevel !== 1 && state.currentMode === "build") {
 		setTimeout(() => {
-			if (state.currentMode === "build" && state.currentWordObj) {
-				speakText(state.currentWordObj.phonetic, 0.9);
+			if (state.currentLevel !== 1 && state.currentWordObj && state.currentMode === "build") {
+				speakText(state.currentWordObj.phonetic || state.currentWordObj.word, 0.9);
 			}
-		}, 220);
+		}, 180);
 	}
 }
 
@@ -796,7 +1082,7 @@ function handleTileSelect(tile) {
 	const expectedValue = playableTargets[nextIndex].value;
 
 	if (state.unitMode === "syllables") {
-		speakText(toSafeSyllablePhonetic(tile.value), 0.9);
+		SyllableAudioPlayer.play(tile.value, 0.9);
 	} else {
 		speakText(toSafeLetterPhonetic(tile.value), 0.9);
 	}
@@ -861,6 +1147,79 @@ function getLivewireGameComponent() {
 	return null;
 }
 
+/* ==========================================================================
+   9. ACTUALIZACIÓN Y ANIMACIÓN DE LA BARRA DE PROGRESO DENTRO DEL JUEGO
+   ========================================================================== */
+function updateGameProgressBar(stars, target = state.targetStars || 100, animate = true) {
+	const fillEl = document.getElementById("game-progress-fill");
+	const starsEl = document.getElementById("game-progress-stars");
+	const targetEl = document.getElementById("game-progress-target");
+	const starIconEl = document.getElementById("game-progress-star-icon");
+	const floaterEl = document.getElementById("game-progress-floater");
+	const shimmerEl = document.getElementById("game-progress-shimmer");
+
+	const safeTarget = Math.max(1, target || 100);
+	const percent = Math.min(100, Math.max(0, Math.round((stars / safeTarget) * 100)));
+
+	if (starsEl) starsEl.textContent = String(stars);
+	if (targetEl) targetEl.textContent = String(safeTarget);
+
+	if (fillEl) {
+		fillEl.style.width = `${percent}%`;
+		if (state.currentLevel === 1) {
+			fillEl.style.background = "linear-gradient(90deg, #818cf8 0%, #6366f1 100%)";
+		} else if (state.currentLevel === 2) {
+			fillEl.style.background = "linear-gradient(90deg, #34d399 0%, #10b981 100%)";
+		} else if (state.currentLevel === 3) {
+			fillEl.style.background = "linear-gradient(90deg, #fbbf24 0%, #f59e0b 100%)";
+		} else {
+			fillEl.style.background = "linear-gradient(90deg, #fb7185 0%, #f43f5e 100%)";
+		}
+		if (percent === 0) {
+			fillEl.classList.add("is-empty");
+		} else {
+			fillEl.classList.remove("is-empty");
+		}
+	}
+
+	if (animate) {
+		// 1. Pop y salto visual del número de estrellas
+		if (starsEl) {
+			starsEl.classList.remove("progress-number-pop");
+			void starsEl.offsetWidth;
+			starsEl.classList.add("progress-number-pop");
+		}
+
+		// 2. Giro y escala de la estrella
+		if (starIconEl) {
+			starIconEl.classList.remove("progress-star-spin");
+			void starIconEl.offsetWidth;
+			starIconEl.classList.add("progress-star-spin");
+		}
+
+		// 3. Brillo y pulso de avance en el relleno de la barra
+		if (fillEl) {
+			fillEl.classList.remove("progress-fill-advancing");
+			void fillEl.offsetWidth;
+			fillEl.classList.add("progress-fill-advancing");
+		}
+
+		// 4. Destello luminoso que recorre la barra
+		if (shimmerEl) {
+			shimmerEl.classList.remove("active-shimmer");
+			void shimmerEl.offsetWidth;
+			shimmerEl.classList.add("active-shimmer");
+		}
+
+		// 5. +1 ⭐ flotante que sube hacia arriba
+		if (floaterEl) {
+			floaterEl.classList.remove("progress-float-anim");
+			void floaterEl.offsetWidth;
+			floaterEl.classList.add("progress-float-anim");
+		}
+	}
+}
+
 function syncStarWithBackend(level = 1) {
 	const wire = getLivewireGameComponent();
 	if (!wire) {
@@ -880,6 +1239,7 @@ function syncStarWithBackend(level = 1) {
 					const starEl = document.getElementById("star-count");
 					if (starEl) starEl.textContent = String(res.stars);
 					localStorage.setItem("aventura_letras_stars", String(res.stars));
+					updateGameProgressBar(state.stars, state.targetStars || 100, false);
 				}
 
 				if (res && res.unlockedNextLevel) {
@@ -917,14 +1277,17 @@ function triggerSuccess() {
 	const starEl = document.getElementById("star-count");
 	if (starEl) starEl.textContent = String(state.stars);
 
+	// Actualizar barra de progreso adentro del juego con animación de avance
+	updateGameProgressBar(state.stars, state.targetStars || 100, true);
+
 	// Sincronización en segundo plano con Livewire v4 y base de datos MySQL
 	syncStarWithBackend(state.currentLevel || 1);
 
-	// Si venía del modo de lectura (hablar), revelamos el emoji con animación antes de abrir el modal
+	// Si venía del modo de lectura (hablar) y hay emoji, revelarlo con animación
 	const emojiEl = document.getElementById("word-emoji");
 	const emojiBtn = document.getElementById("emoji-btn");
 
-	if (state.currentWordObj && emojiEl) {
+	if (state.currentLevel !== 1 && state.currentWordObj && state.currentWordObj.emoji && emojiEl) {
 		emojiEl.textContent = state.currentWordObj.emoji;
 		if (emojiBtn) emojiBtn.classList.remove("mystery");
 		emojiEl.classList.remove("emoji-reveal-anim");
@@ -933,32 +1296,22 @@ function triggerSuccess() {
 		emojiEl.classList.add("emoji-reveal-anim");
 	}
 
-	// Mostrar siempre el emoji y la palabra exacta del ejercicio en el modal de éxito
-	const successEmoji = document.getElementById("success-emoji");
-	const successWord = document.getElementById("success-word");
-	if (successEmoji && state.currentWordObj) {
-		successEmoji.textContent = state.currentWordObj.emoji;
-	}
-	if (successWord && state.currentWordObj) {
-		successWord.textContent = formatTextCase(state.currentWordObj.word);
-	}
-
 	SoundFX.fanfare();
 	fireQuickConfetti();
 
-	// Pausa extendida para modo hablar (1.5s) para apreciar el emoji revelado
-	const delayBeforeModal = state.currentMode === "speak" ? 1500 : 350;
+	// Transición directa y fluida a la siguiente sílaba o palabra
+	let delayBeforeNext = 800;
+	if (state.currentLevel === 1) {
+		delayBeforeNext = 750;
+	} else if (state.currentMode === "speak") {
+		delayBeforeNext = 1200;
+	}
 
 	const t1 = setTimeout(() => {
-		const overlay = document.getElementById("success-overlay");
-		if (overlay) overlay.classList.remove("hidden");
-	}, delayBeforeModal);
-
-	const t2 = setTimeout(() => {
 		nextExercise();
-	}, delayBeforeModal + 1250);
+	}, delayBeforeNext);
 
-	state.transitionTimers.push(t1, t2);
+	state.transitionTimers.push(t1);
 }
 
 /* ==========================================================================
@@ -987,20 +1340,26 @@ function updateModeButtonsUI() {
 }
 
 window.addEventListener("DOMContentLoaded", () => {
-	const starEl = document.getElementById("star-count");
-	if (starEl) {
-		const initialStars = starEl.dataset && starEl.dataset.initialStars !== undefined
-			? parseInt(starEl.dataset.initialStars, 10)
-			: parseInt(localStorage.getItem("aventura_letras_stars") || "0", 10);
-		state.stars = isNaN(initialStars) ? 0 : initialStars;
-		starEl.textContent = String(state.stars);
-	}
-
-	// Leer palabras iniciales inyectadas por Livewire en data-words
+	SyllableAudioPlayer.init();
 	const gameArena = document.getElementById("game-arena");
+
+	// 1. Leer nivel, metas y estrellas inyectadas por el servidor en dataset
 	if (gameArena) {
 		if (gameArena.dataset.level) {
 			state.currentLevel = parseInt(gameArena.dataset.level, 10) || 1;
+		}
+		if (gameArena.dataset.target) {
+			const targetFromAttr = parseInt(gameArena.dataset.target, 10);
+			if (!isNaN(targetFromAttr) && targetFromAttr > 0) {
+				state.targetStars = targetFromAttr;
+			}
+		}
+		if (gameArena.dataset.stars !== undefined && gameArena.dataset.stars !== "") {
+			const starsFromAttr = parseInt(gameArena.dataset.stars, 10);
+			if (!isNaN(starsFromAttr)) {
+				state.stars = starsFromAttr;
+				localStorage.setItem("aventura_letras_stars", String(state.stars));
+			}
 		}
 		if (gameArena.dataset.words) {
 			try {
@@ -1014,10 +1373,42 @@ window.addEventListener("DOMContentLoaded", () => {
 		}
 	}
 
+	updateLevelBadge();
+
+	// 2. Fallbacks si state.stars es 0 (leer del HTML del progreso o localStorage)
+	if (state.stars === 0) {
+		const progressStarsEl = document.getElementById("game-progress-stars");
+		if (progressStarsEl && progressStarsEl.textContent.trim()) {
+			const parsed = parseInt(progressStarsEl.textContent.trim(), 10);
+			if (!isNaN(parsed) && parsed > 0) {
+				state.stars = parsed;
+			}
+		}
+		if (state.stars === 0) {
+			const saved = localStorage.getItem("aventura_letras_stars");
+			if (saved !== null) {
+				const parsedSaved = parseInt(saved, 10);
+				state.stars = isNaN(parsedSaved) ? 0 : parsedSaved;
+			}
+		}
+	}
+
+	const starEl = document.getElementById("star-count");
+	if (starEl) {
+		starEl.textContent = String(state.stars);
+	}
+
+	// 3. Inicializar la barra de progreso dentro del juego con las estrellas reales
+	updateGameProgressBar(state.stars, state.targetStars || 100, false);
+
 	window.addEventListener("level-started", (event) => {
 		const detail = event.detail?.[0] || event.detail || {};
 		if (detail.level !== undefined) {
 			state.currentLevel = parseInt(detail.level, 10) || 1;
+		}
+		updateLevelBadge();
+		if (detail.target !== undefined) {
+			state.targetStars = parseInt(detail.target, 10) || 100;
 		}
 		if (detail.stars !== undefined) {
 			state.stars = parseInt(detail.stars, 10) || 0;
@@ -1025,6 +1416,7 @@ window.addEventListener("DOMContentLoaded", () => {
 			if (currentStarEl) currentStarEl.textContent = String(state.stars);
 			localStorage.setItem("aventura_letras_stars", String(state.stars));
 		}
+		updateGameProgressBar(state.stars, state.targetStars || 100, false);
 		if (Array.isArray(detail.words) && detail.words.length > 0) {
 			updateWordsPool(detail.words);
 		}
@@ -1035,10 +1427,11 @@ window.addEventListener("DOMContentLoaded", () => {
 		state.stars = 0;
 		localStorage.setItem("aventura_letras_stars", "0");
 		if (starEl) starEl.textContent = "0";
+		updateGameProgressBar(0, state.targetStars || 100, false);
 		SoundFX.pop();
 		const wire = getLivewireGameComponent();
 		if (wire && typeof wire.resetStars === "function") {
-			wire.resetStars(1);
+			wire.resetStars(state.currentLevel || 1);
 		}
 	});
 
@@ -1049,7 +1442,14 @@ window.addEventListener("DOMContentLoaded", () => {
 		if (labelCaseDesktop) labelCaseDesktop.textContent = state.isUppercase ? "MAYÚSCULAS" : "minúsculas";
 		if (labelCaseMobile) labelCaseMobile.textContent = state.isUppercase ? "MAY" : "min";
 		SoundFX.pop();
-		if (state.currentMode === "speak") {
+
+		if (state.currentLevel === 1) {
+			// Actualizar en vivo las tarjetas de sílabas sin recargar el ejercicio
+			document.querySelectorAll(".syllable-card-btn").forEach(btn => {
+				const syl = btn.dataset.syllable;
+				if (syl) btn.textContent = formatTextCase(syl);
+			});
+		} else if (state.currentMode === "speak") {
 			renderModeA();
 		} else {
 			renderModeBElements();
@@ -1067,6 +1467,13 @@ window.addEventListener("DOMContentLoaded", () => {
 		nextExercise();
 	});
 	updateModeButtonsUI();
+
+	document.getElementById("btn-replay-syllable")?.addEventListener("click", () => {
+		if (state.currentWordObj) {
+			SoundFX.pop();
+			SyllableAudioPlayer.play(state.currentWordObj.word, 0.9);
+		}
+	});
 
 	document.getElementById("btn-listen-word")?.addEventListener("click", () => {
 		if (state.currentWordObj) speakText(state.currentWordObj.phonetic, 0.9);

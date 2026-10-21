@@ -15,7 +15,7 @@
 
 	<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
 
-	<link rel="stylesheet" type="text/css" href="{{ asset('assets/styles.css') }}">
+	<link rel="stylesheet" type="text/css" href="{{ asset('assets/styles.css?v=0.006') }}">
 	
 	@vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
@@ -24,7 +24,7 @@
 
 	<livewire:game-screen :student="$student" />
 
-	<script src="{{ asset('assets/scripts.js') }}"></script>
+	<script src="{{ asset('assets/scripts.js?v=0.006') }}"></script>
 </body>
 
 </html>

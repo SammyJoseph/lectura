@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
@@ -25,6 +26,8 @@ use Illuminate\Support\Str;
 #[Fillable(['name', 'slug', 'access_token', 'avatar', 'parent_name', 'parent_phone', 'is_active'])]
 class Student extends Model
 {
+    use HasFactory;
+
     /**
      * Cantidad de estrellas requeridas para desbloquear el siguiente nivel.
      * Puedes cambiar este valor (por ejemplo a 300) y se actualizará en todo el juego.
@@ -37,6 +40,10 @@ class Student extends Model
             if (empty($student->access_token)) {
                 $student->access_token = Str::lower(Str::random(4));
             }
+        });
+
+        static::created(function (Student $student): void {
+            $student->initializeLevels();
         });
     }
 
@@ -86,6 +93,24 @@ class Student extends Model
                 'is_unlocked' => ($level === 1),
             ]
         );
+    }
+
+    /**
+     * Check if a specific level is unlocked for this student.
+     */
+    public function isLevelUnlocked(int $level): bool
+    {
+        return (bool) $this->getProgressForLevel($level)->is_unlocked;
+    }
+
+    /**
+     * Manually set the unlocked state of a specific level for this student.
+     */
+    public function setLevelUnlocked(int $level, bool $unlocked): void
+    {
+        $this->getProgressForLevel($level)->update([
+            'is_unlocked' => $unlocked,
+        ]);
     }
 
     /**

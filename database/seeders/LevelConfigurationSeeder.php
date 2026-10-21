@@ -15,15 +15,15 @@ class LevelConfigurationSeeder extends Seeder
         $levels = [
             [
                 'level' => 1,
-                'name' => 'Palabras Mágicas',
-                'description' => 'Descubre palabras sencillas de 2 y 3 sílabas con objetos cotidianos',
+                'name' => 'Silabario Aventurero',
+                'description' => 'Reconoce y practica el sonido de las sílabas con las vocales',
                 'required_stars' => 100,
                 'is_active' => true,
             ],
             [
                 'level' => 2,
-                'name' => 'Silabario Aventurero',
-                'description' => 'Aprende y reconoce el sonido de las sílabas',
+                'name' => 'Palabras Mágicas',
+                'description' => 'Descubre palabras sencillas de 2 y 3 sílabas con objetos cotidianos',
                 'required_stars' => 100,
                 'is_active' => true,
             ],

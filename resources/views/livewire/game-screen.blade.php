@@ -44,12 +44,12 @@
 			<!-- Grid de 4 Niveles -->
 			<div class="level-grid">
 				@foreach ($levels as $lvl => $data)
-					<div class="level-card {{ $data['is_unlocked'] ? 'unlocked border-2 border-amber-300' : 'locked' }}">
+					<div class="level-card {{ $data['is_unlocked'] ? 'unlocked border-2 ' . ($data['border'] ?? 'border-indigo-300') : 'locked' }}">
 						<div>
 							<!-- Encabezado de la tarjeta -->
 							<div class="flex items-center justify-between mb-2">
 								<span class="text-xs font-black tracking-wider uppercase px-3 py-1 rounded-full
-									{{ $data['is_unlocked'] ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-slate-200 text-slate-600' }}">
+									{{ $data['is_unlocked'] ? ($data['badge_class'] ?? 'bg-indigo-100 text-indigo-800 border border-indigo-300') : 'bg-slate-200 text-slate-600' }}">
 									@if ($data['is_unlocked'])
 										⭐ NIVEL {{ $lvl }}
 									@else
@@ -58,7 +58,7 @@
 								</span>
 
 								@if ($data['is_unlocked'])
-									<span class="text-xs font-extrabold text-emerald-600 flex items-center gap-1">
+									<span class="text-xs font-extrabold {{ $data['unlocked_text'] ?? 'text-indigo-600' }} flex items-center gap-1">
 										<span>¡Desbloqueado!</span>
 									</span>
 								@else
@@ -89,14 +89,14 @@
 								$percent = min(100, (int) round(($data['stars'] / max(1, $data['target'])) * 100));
 							@endphp
 							<div class="progress-bar-track mb-4">
-								<div class="progress-bar-fill" style="width: {{ $percent }}%;"></div>
+								<div class="progress-bar-fill" style="width: {{ $percent }}%; background: {{ $data['progress_gradient'] ?? 'linear-gradient(90deg, #818cf8 0%, #6366f1 100%)' }};"></div>
 							</div>
 
 							<!-- Botón de acción -->
 							@if ($data['is_unlocked'])
 								<button wire:click="selectLevel({{ $lvl }})"
-									class="btn-3d w-full py-3 px-4 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-sm sm:text-base flex items-center justify-center gap-2"
-									style="--btn-shadow: #059669; box-shadow: 0 4px 0 #059669;">
+									class="btn-3d w-full py-3 px-4 rounded-2xl {{ $data['btn_class'] ?? 'bg-indigo-500 hover:bg-indigo-600' }} text-white font-extrabold text-sm sm:text-base flex items-center justify-center gap-2"
+									style="--btn-shadow: {{ $data['btn_shadow'] ?? '#4338ca' }}; box-shadow: 0 4px 0 {{ $data['btn_shadow'] ?? '#4338ca' }};">
 									<span>¡JUGAR!</span>
 									<span>🚀</span>
 								</button>
@@ -115,8 +115,12 @@
 	{{-- ====================================================================
 	     2. PANTALLA DE JUEGO (NIVEL ACTIVO)
 	     ==================================================================== --}}
-	<div id="game-arena" class="w-full flex flex-col items-center {{ $activeLevel > 0 ? '' : 'hidden' }}" data-words="{{ json_encode($activeWords) }}" data-level="{{ $activeLevel }}">
-		<header class="top-bar">
+	<div id="game-arena" class="w-full flex flex-col items-center {{ $activeLevel > 0 ? '' : 'hidden' }}"
+		data-words="{{ json_encode($activeWords) }}"
+		data-level="{{ $activeLevel }}"
+		data-stars="{{ $levels[$activeLevel > 0 ? $activeLevel : 1]['stars'] ?? 0 }}"
+		data-target="{{ $levels[$activeLevel > 0 ? $activeLevel : 1]['target'] ?? 100 }}">
+		<header class="top-bar game-top-bar w-full max-w-[480px] flex items-center justify-between">
 			<!-- Botón volver al Menú -->
 			<button wire:click="returnToMenu" id="btn-return-menu"
 				class="btn-3d btn-pill bg-sky-100 hover:bg-sky-200 text-sky-800 border-sky-300 font-extrabold text-sm"
@@ -124,19 +128,6 @@
 				title="Volver a elegir nivel">
 				<span>🏠</span>
 				<span class="font-display font-bold">Menú</span>
-			</button>
-
-			<!-- Contador de estrellas del nivel -->
-			<div class="flex items-center gap-1.5 bg-amber-100 border-2 border-amber-300 px-3.5 py-1.5 rounded-2xl">
-				<span class="text-xl">⭐</span>
-				<span id="star-count" data-initial-stars="{{ $levels[1]['stars'] ?? 0 }}" class="font-display text-lg font-bold text-amber-900">
-					{{ $levels[1]['stars'] ?? 0 }}
-				</span>
-			</div>
-
-			<button id="btn-reset-stars" title="Reiniciar estrellas de este nivel"
-				class="text-slate-400 hover:text-slate-600 text-sm px-1.5 py-1 rounded-lg">
-				↻
 			</button>
 
 			<!-- Selector Mayúsculas / Minúsculas -->
@@ -147,17 +138,17 @@
 				<span id="label-case-mobile">MAY</span>
 			</button>
 
-			<!-- Modo de juego: Aleatorio / Hablar / Armar -->
+			<!-- Modo de juego: Aleatorio / Hablar / Armar (Nivel 2) -->
 			<button id="btn-toggle-mode" class="btn-3d btn-pill bg-indigo-100 text-indigo-800 border-indigo-300"
 				style="--btn-shadow: #818cf8; box-shadow: 0 3px 0 #818cf8;" title="Toca para cambiar modo">
 				<span id="mode-toggle-icon">🎲</span>
 				<span id="mode-toggle-label">Aleatorio</span>
 			</button>
 
-			<!-- Píldora del estudiante -->
-			<div class="hidden sm:flex items-center gap-1.5 bg-white border border-slate-200 px-3 py-1.5 rounded-2xl shadow-sm text-xs font-bold text-slate-700">
-				<span>{{ $studentAvatar }}</span>
-				<span>{{ $studentName }}</span>
+			<!-- Badge informativo fijo para Nivel 1 -->
+			<div id="badge-level1-mode" class="hidden btn-pill bg-indigo-100 text-indigo-800 border-indigo-300 font-extrabold text-xs py-1.5 px-3 flex items-center gap-1.5">
+				<span>👂</span>
+				<span class="font-bold">Escucho y Toco</span>
 			</div>
 		</header>
 
@@ -167,9 +158,39 @@
 					class="px-3.5 py-1 rounded-full text-xs font-extrabold tracking-wide bg-rose-100 text-rose-700">
 					🎤 LEO Y HABLO
 				</span>
-				<span class="text-xs font-black text-indigo-700 bg-indigo-50 border border-indigo-200 px-2.5 py-0.5 rounded-full">
-					{{ $levels[$activeLevel]['name'] ?? 'Nivel 1' }}
+				<span id="level-name-badge" class="text-xs font-black text-indigo-700 bg-indigo-50 border border-indigo-200 px-2.5 py-0.5 rounded-full">
+					Nivel {{ $activeLevel > 0 ? $activeLevel : 1 }}
 				</span>
+			</div>
+
+			<!-- Barra de progreso del nivel adentro del juego -->
+			<div id="game-progress-wrapper" class="w-full my-2 px-1 relative">
+				<div class="flex items-center justify-between text-xs font-black mb-1.5">
+					<span class="text-slate-500 uppercase tracking-wider">Progreso</span>
+					<span class="text-amber-800 font-display text-sm font-bold flex items-center gap-1">
+						<span id="game-progress-star-icon" class="inline-block">⭐</span>
+						<span id="game-progress-stars">{{ $levels[$activeLevel > 0 ? $activeLevel : 1]['stars'] ?? 0 }}</span>
+						<span class="text-slate-400 font-normal">/</span>
+						<span id="game-progress-target">{{ $levels[$activeLevel > 0 ? $activeLevel : 1]['target'] ?? 100 }}</span>
+					</span>
+				</div>
+
+				@php
+					$currStars = $levels[$activeLevel > 0 ? $activeLevel : 1]['stars'] ?? 0;
+					$currTarget = max(1, $levels[$activeLevel > 0 ? $activeLevel : 1]['target'] ?? 100);
+					$currPercent = min(100, (int) round(($currStars / $currTarget) * 100));
+				@endphp
+				<div class="progress-bar-track relative overflow-hidden">
+					<div id="game-progress-fill" class="progress-bar-fill relative {{ $currPercent === 0 ? 'is-empty' : '' }}" style="width: {{ $currPercent }}%; background: {{ $levels[$activeLevel > 0 ? $activeLevel : 1]['progress_gradient'] ?? 'linear-gradient(90deg, #818cf8 0%, #6366f1 100%)' }};">
+						<div id="game-progress-shimmer" class="progress-bar-shimmer"></div>
+					</div>
+				</div>
+
+				<!-- Indicador flotante animado (+1 ⭐) al resolver un ejercicio -->
+				<div id="game-progress-floater" class="pointer-events-none absolute right-2 -top-1 opacity-0 font-display font-black text-sm text-amber-500 flex items-center gap-0.5 select-none">
+					<span>+1</span>
+					<span>⭐</span>
+				</div>
 			</div>
 
 			<div id="emoji-btn" class="emoji-circle mystery">
@@ -187,9 +208,26 @@
 				</button>
 				<button id="btn-listen-slow" class="btn-3d btn-slow">
 					<span>🐢</span>
-					<span>LENTO</span>
+					<span>SÍLABAS</span>
 				</button>
 			</div>
+
+			<!-- Sección Nivel 1: Discriminación de Sílabas (Escucho y Toco, texto puro) -->
+			<section id="section-syllables" class="hidden w-full flex flex-col items-center my-1">
+				<button id="btn-replay-syllable" class="btn-3d flex items-center justify-center gap-2 py-3 px-6 rounded-2xl bg-indigo-500 hover:bg-indigo-600 text-white font-extrabold text-sm sm:text-base my-2"
+					style="--btn-shadow: #4338ca; box-shadow: 0 4px 0 #4338ca;" title="Toca para escuchar de nuevo">
+					<span class="text-xl animate-pulse">🔊</span>
+					<span class="font-display tracking-wide">¡TOCA PARA ESCUCHAR!</span>
+				</button>
+
+				<p class="text-xs sm:text-sm font-extrabold text-slate-400 uppercase tracking-wider my-1.5 text-center">
+					¿Dónde dice esta sílaba?
+				</p>
+
+				<div id="syllables-grid" class="grid grid-cols-2 gap-3.5 w-full max-w-[340px] my-3">
+					<!-- Se inyectan dinámicamente las tarjetas de sílabas -->
+				</div>
+			</section>
 
 			<!-- Sección Modo A: Leo y Hablo -->
 			<section id="section-mode-a" class="w-full flex flex-col items-center">
@@ -198,18 +236,9 @@
 
 				<div id="syllables-helper" class="flex flex-wrap items-center justify-center gap-2 my-2"></div>
 
-				<p class="text-xs font-extrabold text-slate-400 uppercase tracking-wider mt-1 mb-2">
-					LEE EN VOZ ALTA
-				</p>
-
 				<button id="btn-mic" class="btn-3d mic-btn" title="Toca para hablar">
 					<span id="mic-icon">🎤</span>
 				</button>
-
-				<p id="mic-status-text"
-					class="text-xs font-extrabold text-slate-600 uppercase tracking-wide mt-2 text-center">
-					TOCA EL MICRÓFONO Y LEE EN VOZ ALTA
-				</p>
 
 				<a id="btn-parent-approve" href="#"
 					class="mt-4 text-xs font-semibold text-slate-400 hover:text-slate-600 underline decoration-slate-300 transition-colors">
@@ -219,11 +248,6 @@
 
 			<!-- Sección Modo B: Escucho y Armo -->
 			<section id="section-mode-b" class="hidden w-full flex flex-col items-center mt-2">
-				<p id="build-instruction"
-					class="text-xs font-extrabold text-slate-500 uppercase tracking-wider mb-2.5 text-center">
-					TOCA LAS FICHAS EN ORDEN PARA ESCRIBIRLA
-				</p>
-
 				<div id="slots-container" class="slots-box"></div>
 
 				<div id="tiles-pool" class="tiles-pool-box"></div>
@@ -235,21 +259,9 @@
 			<div class="w-full border-t border-slate-100 mt-5 pt-3 flex justify-end">
 				<button id="btn-skip"
 					class="text-xs font-extrabold text-slate-400 hover:text-slate-600 flex items-center gap-1 uppercase tracking-wider">
-					<span>OTRA PALABRA</span>
+					<span id="skip-label">OTRA PALABRA</span>
 					<span>⏭️</span>
 				</button>
-			</div>
-
-			<!-- Overlay de Éxito Normal (+1 Estrella) -->
-			<div id="success-overlay"
-				class="hidden absolute inset-0 bg-white/95 backdrop-blur-sm rounded-[32px] flex flex-col items-center justify-center z-20 p-6 text-center animate-popIn">
-				<div id="success-emoji" class="text-7xl mb-2 animate-bounce">🌟</div>
-				<h2 id="success-word" class="font-display text-4xl font-bold text-emerald-600 mb-2">¡MUY BIEN!</h2>
-				<div
-					class="inline-flex items-center gap-1.5 bg-amber-100 border-2 border-amber-300 px-4 py-1.5 rounded-full text-amber-800 font-extrabold text-base">
-					<span>+1</span>
-					<span>⭐</span>
-				</div>
 			</div>
 
 			<!-- Modal Celebración Especial de Desbloqueo de Nivel -->

@@ -267,5 +267,28 @@ test('filament list words page provides tabs per level with word counts', functi
 
     expect($tabs)->toHaveKeys(['nivel_1', 'nivel_2', 'nivel_3', 'nivel_4']);
     expect((int) $tabs['nivel_1']->getBadge())->toBeGreaterThanOrEqual(100);
-    expect((int) $tabs['nivel_2']->getBadge())->toBe(0);
+    expect((int) $tabs['nivel_2']->getBadge())->toBeGreaterThanOrEqual(100);
+    expect((int) $tabs['nivel_3']->getBadge())->toBe(0);
+});
+
+test('words can be retrieved for level 2 and passed to game arena', function () {
+    $this->seed(WordSeeder::class);
+
+    $student = Student::create([
+        'name' => 'Camila Nivel 2',
+        'slug' => 'camila-nivel-2-'.uniqid(),
+        'avatar' => '👧',
+    ]);
+    $student->initializeLevels();
+    $student->getProgressForLevel(2)->update(['is_unlocked' => true]);
+
+    Livewire::test(GameScreen::class, ['student' => $student])
+        ->call('selectLevel', 2)
+        ->assertDispatched('level-started', function ($name, $params) {
+            $data = is_array($params) && isset($params[0]) && is_array($params[0]) ? $params[0] : $params;
+
+            return ($data['level'] ?? null) === 2
+                && isset($data['words'])
+                && count($data['words']) >= 100;
+        });
 });

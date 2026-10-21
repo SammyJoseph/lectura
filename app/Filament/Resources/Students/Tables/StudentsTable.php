@@ -41,6 +41,21 @@ class StudentsTable
                     ->badge()
                     ->color('warning'),
 
+                TextColumn::make('unlocked_levels')
+                    ->label('Niveles Habilitados')
+                    ->state(function (Student $record): array {
+                        $unlocked = [];
+                        for ($i = 1; $i <= 4; $i++) {
+                            if ($record->isLevelUnlocked($i)) {
+                                $unlocked[] = "Nivel {$i}";
+                            }
+                        }
+
+                        return $unlocked;
+                    })
+                    ->badge()
+                    ->color('success'),
+
                 TextColumn::make('parent_name')
                     ->label('Padre / Tutor')
                     ->toggleable(),
